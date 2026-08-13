@@ -357,7 +357,6 @@ class WorkerMyJobModel {
   List<String> get fullImageUrls => jobImages;
 
   double get amountValue => double.tryParse(amount) ?? 0;
-
   String get amountLabel {
     if (amountValue <= 0) return 'worker_job_negotiable'.tr;
     return '${amountValue.toStringAsFixed(0)} ${'post_job_currency_uzs'.tr}';
