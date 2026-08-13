@@ -1,0 +1,65 @@
+name: helper_app2
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_spinkit: ^5.2.1
+  image_picker: ^1.0.7
+  record: ^6.0.0
+  audioplayers: ^6.1.0
+  file_picker: ^8.1.2
+  permission_handler: ^11.3.1
+  signature: ^5.5.0
+  mobile_scanner: ^5.2.3
+  table_calendar: ^3.0.9
+  fluttertoast: ^8.2.4
+  get: ^4.6.6
+  get_storage: ^2.1.1
+  pin_code_fields: ^8.0.1
+  shared_preferences: 2.2.0
+  google_nav_bar: ^5.0.6
+  http: ^1.2.0
+  google_maps_flutter: ^2.9.0
+
+
+
+
+  # ---- NEEDED so foreground push notifications actually show a banner ----
+  # FCM does NOT show a system notification automatically while the app is
+  # OPEN (foreground). This plugin displays it manually. Required for
+  # working notifications.
+  flutter_local_notifications: ^18.0.1
+  firebase_core: ^4.12.1
+  firebase_auth: ^6.5.6
+  firebase_messaging: ^16.4.3
+  cloud_firestore: ^6.7.1
+  country_picker: ^2.0.26
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/
+  fonts:
+    - family: pr
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+    - family: ps
+      fonts:
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+    - family: pb
+      fonts:
+        - asset: assets/fonts/Poppins-Bold.ttf
+    - family: pm
+      fonts:
+        - asset: assets/fonts/Poppins-Medium.ttf
