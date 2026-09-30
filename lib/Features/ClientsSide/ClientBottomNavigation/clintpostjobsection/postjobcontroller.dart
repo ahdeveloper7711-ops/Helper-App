@@ -2,16 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:helper_app2/Features/ClientsSide/ClientBottomNavigation/clintpostjobsection/postjobsummry.dart';
-
-import '../../../../Core/Apis/jobservice.dart';
+import 'package:helper_app2/Core/Apis/jobservice.dart';
+import 'package:helper_app2/Core/Apis/paymentservice.dart';
 import '../clientbottomnavigationscreen.dart';
 import '../clienthomesection/clientjobcontroller.dart';
+
 enum BudgetType { fixed, hourly, negotiable }
-
 enum PaymentType { cash, card, wallet }
-
 enum ScheduleDateType { today, custom }
-
 enum UrgencyType { flexible, urgent }
 
 class PostJobController extends GetxController {
@@ -25,7 +23,6 @@ class PostJobController extends GetxController {
   final Rx<String?> selectedSubCategory = Rx<String?>(null);
   final Rx<IconData?> selectedCategoryIcon = Rx<IconData?>(null);
 
-  /// LOCATION
   /// LOCATION (with coordinates)
   final locationController = TextEditingController();
   final RxnDouble latitude = RxnDouble();
@@ -46,6 +43,7 @@ class PostJobController extends GetxController {
     latitude.value = null;
     longitude.value = null;
   }
+
   /// DESCRIPTION
   final descriptionController = TextEditingController();
 
@@ -68,6 +66,13 @@ class PostJobController extends GetxController {
 
   /// SUBMISSION STATE
   final RxBool isSubmitting = false.obs;
+
+  /// ========== ESTIMATE FEE STATE ==========
+  final RxBool isEstimatingFee = false.obs;
+  final RxString clientFee = "".obs;
+  final RxString totalToPay = "".obs;
+  final RxBool isFeeEnabled = false.obs;
+  final RxString estimateFeeMessage = "".obs;
 
   /// GETTERS FOR DISPLAY
   String get scheduleDateLabel =>
@@ -130,7 +135,7 @@ class PostJobController extends GetxController {
   }
 
   /// ------------------------------------------------------------
-  /// BASIC FORM VALIDATION — Submit dabane se pehle chalta hai
+  /// BASIC FORM VALIDATION
   /// ------------------------------------------------------------
   bool validateForm() {
     if (taskTitleController.text.trim().isEmpty) {
@@ -185,29 +190,82 @@ class PostJobController extends GetxController {
   }
 
   /// ------------------------------------------------------------
-  /// STEP 1: Form Submit -> Summary Screen (review) par le jao
+  /// Amount for Estimate Fee API
+  /// ------------------------------------------------------------
+  double? _getAmountForEstimate() {
+    switch (budgetType.value) {
+      case BudgetType.fixed:
+        return double.tryParse(amountController.text.trim().replaceAll(',', ''));
+      case BudgetType.hourly:
+        final rate = double.tryParse(rateController.text.trim().replaceAll(',', '')) ?? 0;
+        final hours = double.tryParse(estimatedHoursController.text.trim()) ?? 0;
+        if (rate <= 0) return null;
+        // agar hours diye hain to total, warna sirf rate
+        return hours > 0 ? rate * hours : rate;
+      case BudgetType.negotiable:
+        return null; // negotiable pe fee estimate skip
+    }
+  }
+
+  /// ------------------------------------------------------------
+  /// ESTIMATE FEE API CALL
+  /// ------------------------------------------------------------
+  Future<void> fetchEstimateFee() async {
+    final amount = _getAmountForEstimate();
+
+    // reset previous
+    clientFee.value = "";
+    totalToPay.value = "";
+    isFeeEnabled.value = false;
+    estimateFeeMessage.value = "";
+
+    if (amount == null || amount <= 0) {
+      return;
+    }
+
+    isEstimatingFee.value = true;
+
+    try {
+      final result = await PaymentService.estimateFee(amount: amount);
+
+      if (result.success) {
+        clientFee.value = result.clientFee ?? "";
+        totalToPay.value = result.totalToPay ?? "";
+        isFeeEnabled.value = result.isFeeEnabled;
+        estimateFeeMessage.value = result.message;
+      } else {
+        estimateFeeMessage.value = result.message;
+      }
+    } finally {
+      isEstimatingFee.value = false;
+    }
+  }
+
+  /// ------------------------------------------------------------
+  /// STEP 1: Form Submit -> Summary + Estimate Fee
   /// ------------------------------------------------------------
   void goToSummary() {
     if (!validateForm()) return;
+
+    // Summary pe jaate hi fee estimate karo
+    fetchEstimateFee();
+
     Get.to(() => const PostJobSummaryScreen());
   }
 
   /// ------------------------------------------------------------
-  /// STEP 2: Summary Screen par "Confirm & Submit" -> Create Job API
+  /// STEP 2: Confirm & Submit
   /// ------------------------------------------------------------
   Future<void> confirmAndSubmit() async {
     if (isSubmitting.value) return;
     isSubmitting.value = true;
     debugPrint("🚀 [$_tag] Submitting job post...");
 
-    // ---- IMAGE ENCODING (base64 data-URI, API contract ke mutabiq) ----
     List<String>? encodedImages;
     if (attachedPhotos.isNotEmpty) {
       debugPrint("🖼️ [$_tag] Encoding ${attachedPhotos.length} photo(s) to base64...");
       encodedImages = await JobService.encodeImagesForUpload(attachedPhotos.toList());
       debugPrint("🖼️ [$_tag] Encoded ${encodedImages.length} photo(s) successfully");
-    } else {
-      debugPrint("🖼️ [$_tag] No photos attached for this job");
     }
 
     final budgetTypeApi = _budgetTypeApiValue(budgetType.value);
@@ -215,24 +273,9 @@ class PostJobController extends GetxController {
     final startTimeApi = _formatTimeForApi(startTime.value);
     final endTimeApi = _formatTimeForApi(endTime.value);
     final dateTypeApi = _dateTypeApiValue(scheduleDateType.value);
-    // FIX: backend "custom date" select hone par "custom_date" field bhi
-    // zaroori mangta hai ("yyyy-MM-dd" format mein). Pehle ye field bheji
-    // hi nahi ja rahi thi jis se 422 "The custom date field is required..."
-    // error aata tha.
     final customDateApi = scheduleDateType.value == ScheduleDateType.custom
         ? _formatDateForApi(customDate.value)
         : null;
-
-    debugPrint(
-      "🧾 [$_tag] category=${selectedCategory.value}, sub=${selectedSubCategory.value}, "
-          "budgetType=$budgetTypeApi, dateType=$dateTypeApi, customDate=$customDateApi, "
-          "schedule=$scheduleForApi, start=$startTimeApi, end=$endTimeApi, "
-          "images=${encodedImages?.length ?? 0}",
-    );
-    debugPrint("==== SENDING TO API ====");
-    debugPrint("lat: ${latitude.value}");
-    debugPrint("lng: ${longitude.value}");
-    debugPrint("location: ${locationController.text}");
 
     final result = await JobService.createJob(
       category: selectedCategory.value ?? '',
@@ -240,8 +283,6 @@ class PostJobController extends GetxController {
       latitude: latitude.value,
       longitude: longitude.value,
       title: taskTitleController.text.trim(),
-      // NOTE: Form mein abhi separate "city" field nahi hai, isliye
-      // location hi city ke taur par bhi bhej rahe hain.
       city: locationController.text.trim(),
       description: descriptionController.text.trim(),
       budgetType: budgetTypeApi,
@@ -256,12 +297,7 @@ class PostJobController extends GetxController {
           : null,
       paymentMode: _paymentModeApiValue(paymentType.value),
       location: locationController.text.trim(),
-      // FIX: backend sirf "today" ya "custom date" (space ke sath) accept
-      // karta hai. Pehle yahan "custom" (bina space) bheja ja raha tha
-      // jis se 422 "The selected date type is invalid." error aata tha.
       dateType: dateTypeApi,
-      // FIX: "custom date" select hone par backend ko "custom_date" field
-      // (yyyy-MM-dd) bhi chahiye — pehle bilkul bheji hi nahi ja rahi thi.
       customDate: customDateApi,
       startTime: startTimeApi,
       endTime: endTimeApi,
@@ -283,15 +319,11 @@ class PostJobController extends GetxController {
         colorText: Colors.white,
       );
 
-      // Home screen list ko turant refresh karo taake nayi job dikh jaye
       if (Get.isRegistered<ClientJobsController>()) {
-        debugPrint("🔄 [$_tag] Refreshing ClientJobsController...");
         Get.find<ClientJobsController>().refresh();
       }
 
       resetForm();
-
-      // Poore navigation stack ko clear karke bottom navigation par le jao
       Get.offAll(() => const Clientbottomnavigationscreen());
     } else {
       debugPrint("❌ [$_tag] Job post failed: ${result.message}");
@@ -305,7 +337,6 @@ class PostJobController extends GetxController {
     }
   }
 
-  /// Form ko dobara post karne ke liye clean state par le aata hai
   void resetForm() {
     taskTitleController.clear();
     locationController.clear();
@@ -329,15 +360,13 @@ class PostJobController extends GetxController {
     urgencyType.value = UrgencyType.flexible;
 
     attachedPhotos.clear();
-  }
 
-  /// ---------------- API FORMAT HELPERS ----------------
-  /// NOTE: In sab functions ke return values seedha backend API ko
-  /// jaate hain (request body). In par .tr NAHI lagaya gaya — agar
-  /// language change hone par ye strings badal jayen to backend
-  /// validation fail ho jayegi (422 error), kyun ke backend sirf
-  /// exact English values ("cash", "today", "custom date" etc.)
-  /// accept karta hai.
+    // fee state reset
+    clientFee.value = "";
+    totalToPay.value = "";
+    isFeeEnabled.value = false;
+    estimateFeeMessage.value = "";
+  }
 
   String _paymentModeApiValue(PaymentType type) {
     switch (type) {
@@ -361,9 +390,6 @@ class PostJobController extends GetxController {
     }
   }
 
-  /// ScheduleDateType -> backend ki exact expected string.
-  /// Backend sirf "today" aur "custom date" (space ke sath) ko
-  /// valid maanta hai — Postman se confirm ho chuka hai.
   String _dateTypeApiValue(ScheduleDateType type) {
     switch (type) {
       case ScheduleDateType.today:
@@ -373,7 +399,6 @@ class PostJobController extends GetxController {
     }
   }
 
-  /// TimeOfDay -> "01:00 PM" format (jaisa API expect karti hai)
   String _formatTimeForApi(TimeOfDay? t) {
     if (t == null) return "";
     final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
@@ -382,8 +407,6 @@ class PostJobController extends GetxController {
     return "${hour.toString().padLeft(2, '0')}:$minute $period";
   }
 
-  /// DateTime -> "yyyy-MM-dd" format (backend ke "custom_date" field ke
-  /// liye jab date_type == "custom date" ho).
   String? _formatDateForApi(DateTime? date) {
     if (date == null) return null;
     final y = date.year.toString().padLeft(4, '0');
@@ -392,8 +415,6 @@ class PostJobController extends GetxController {
     return "$y-$m-$d";
   }
 
-  /// Date + start time ko "yyyy-MM-dd HH:mm:ss" (24-hour) format mein
-  /// combine karta hai, jaisa API ke "schedule" field mein chahiye.
   String _buildScheduleForApi() {
     final date = scheduleDateType.value == ScheduleDateType.today
         ? DateTime.now()

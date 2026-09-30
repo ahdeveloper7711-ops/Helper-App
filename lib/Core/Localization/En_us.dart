@@ -846,5 +846,17 @@ Map<String, String> enUS = {
   "personal_info_section_contact": "Contact Information",
   "workersettingsnack":"Switched to",
   "post_job_image_pick_error_title": "Error",
-  "post_job_image_pick_error_message": "Something went wrong while selecting the photo. Please try again."
+  "post_job_image_pick_error_message": "Something went wrong while selecting the photo. Please try again.",
+  'wallet_error_title': 'Error',
+  'wallet_error_not_logged_in': 'Please login first',
+  'wallet_error_invalid_amount': 'Please enter a valid amount',
+  'wallet_error_something_went_wrong': 'Something went wrong. Please try again.',
+  'wallet_topup_success': 'Top-up successful',
+  'wallet_topup_failed': 'Top-up failed',
+  'deposit_popup_processing': 'Processing...',
+  'post_job_estimating_fee': 'Calculating platform fee...',
+  'post_job_platform_fee_label': 'Platform Fee',
+  'post_job_total_to_pay_label': 'Total to Pay',
+
+
 };

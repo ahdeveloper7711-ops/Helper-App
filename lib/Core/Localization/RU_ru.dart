@@ -846,5 +846,15 @@ Map<String, String> ruRU = {
   "personal_info_section_contact": "Контактная информация",
   "workersettingsnack":"Перешел на",
   "post_job_image_pick_error_title": "Ошибка",
-  "post_job_image_pick_error_message": "При выборе фотографии произошла ошибка. Пожалуйста, попробуйте еще раз."
+  "post_job_image_pick_error_message": "При выборе фотографии произошла ошибка. Пожалуйста, попробуйте еще раз.",
+  'wallet_error_title': 'Ошибка',
+  'wallet_error_not_logged_in': 'Пожалуйста, сначала войдите в систему.',
+  'wallet_error_invalid_amount': 'Пожалуйста, введите корректную сумму.',
+  'wallet_error_something_went_wrong': 'Что-то пошло не так. Пожалуйста, попробуйте еще раз.',
+  'wallet_topup_success': 'Пополнение успешно выполнено',
+  'wallet_topup_failed': 'Не удалось пополнить счет',
+  'deposit_popup_processing': 'Обработка...',
+  'post_job_estimating_fee': 'Расчет комиссии платформы...',
+  'post_job_platform_fee_label': 'Комиссия платформы',
+  'post_job_total_to_pay_label': 'Итого к оплате',
 };

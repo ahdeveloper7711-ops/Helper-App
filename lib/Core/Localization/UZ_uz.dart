@@ -846,5 +846,15 @@ Map<String, String> uzUZ = {
   "personal_info_section_contact": "Aloqa ma'lumotlari",
   "workersettingsnack":"...ga o‘tdi",
   "post_job_image_pick_error_title": "Xato",
-  "post_job_image_pick_error_message": "Rasmni tanlashda xatolik yuz berdi. Iltimos, qayta urinib ko‘ring."
+  "post_job_image_pick_error_message": "Rasmni tanlashda xatolik yuz berdi. Iltimos, qayta urinib ko‘ring.",
+  'wallet_error_title': 'Xato',
+  'wallet_error_not_logged_in': 'Iltimos, avval tizimga kiring.',
+  'wallet_error_invalid_amount': 'Iltimos, yaroqli miqdorni kiriting.',
+  'wallet_error_something_went_wrong': 'Nimadir noto‘g‘ri ketdi. Iltimos, qayta urinib ko‘ring.',
+  'wallet_topup_success': 'Hisob muvaffaqiyatli to‘ldirildi',
+  'wallet_topup_failed': 'Hisobni to‘ldirish muvaffaqiyatsiz yakunlandi',
+  'deposit_popup_processing': 'Ishlov berilmoqda...',
+  'post_job_estimating_fee': 'Platforma to‘lovi hisoblanmoqda...',
+  'post_job_platform_fee_label': 'Platforma uchun to‘lov',
+  'post_job_total_to_pay_label': 'To‘lanadigan umumiy summa',
 };

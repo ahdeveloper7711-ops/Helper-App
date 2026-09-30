@@ -135,6 +135,7 @@ class PostJobSummaryScreen extends StatelessWidget {
                         }),
 
                         // ---------------- BUDGET & PAYMENT ----------------
+                        // ---------------- BUDGET & PAYMENT ----------------
                         _SummaryCard(
                           iconWidget: _currencyBadge(theme),
                           title: 'post_job_summary_budget_payment_title'.tr,
@@ -156,8 +157,53 @@ class PostJobSummaryScreen extends StatelessWidget {
                                   icon: controller.paymentTypeIcon,
                                   label: 'post_job_payment_type_label'.tr,
                                   value: controller.paymentTypeLabel,
-                                  isLast: true,
+                                  isLast: !(controller.isFeeEnabled.value ||
+                                      controller.isEstimatingFee.value ||
+                                      controller.clientFee.value.isNotEmpty),
                                 ),
+
+                                // ========== PLATFORM FEE SECTION ==========
+                                if (controller.isEstimatingFee.value) ...[
+                                  SizedBox(height: AppSize.heightPercent(0.015)),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: theme.primaryColor,
+                                        ),
+                                      ),
+                                      SizedBox(width: AppSize.widthPercent(0.025)),
+                                      Text(
+                                        'post_job_estimating_fee'.tr,
+                                        style: TextStyle(
+                                          fontFamily: "pr",
+                                          fontSize: AppSize.textPercent(0.033),
+                                          color: theme.canvasColor.withOpacity(0.6),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ] else if (controller.isFeeEnabled.value &&
+                                    controller.clientFee.value.isNotEmpty) ...[
+                                  SizedBox(height: AppSize.heightPercent(0.012)),
+                                  Divider(color: theme.dividerColor.withOpacity(0.15), height: 1),
+                                  SizedBox(height: AppSize.heightPercent(0.012)),
+                                  _SummaryRow(
+                                    icon: Icons.receipt_long_outlined,
+                                    label: 'post_job_platform_fee_label'.tr,
+                                    value: "${'post_job_currency_uzs'.tr}${controller.clientFee.value}",
+                                  ),
+                                  if (controller.totalToPay.value.isNotEmpty)
+                                    _SummaryRow(
+                                      icon: Icons.account_balance_wallet_outlined,
+                                      label: 'post_job_total_to_pay_label'.tr,
+                                      value: "${'post_job_currency_uzs'.tr}${controller.totalToPay.value}",
+                                      isLast: true,
+                                    ),
+                                ],
                               ],
                             ),
                           ),
